@@ -1,0 +1,99 @@
+from uuid import UUID
+from typing import Annotated, List
+from math import ceil
+from fastapi import APIRouter, HTTPException, Request, Response
+from app.db import db_session
+from app.utils import get_session_cookie
+from app.schemas import (
+    PackageInSchema, PackageOutSchema, PackageType, PaginationResponse
+)
+from app.models import PackageModel, PackageTypeModel
+
+
+router = APIRouter()
+
+
+@router.get("/")
+async def get_packages(
+    request: Request,
+    package_type: str = None,
+    page: int = 1,
+    page_size: int = 10,
+) -> PaginationResponse:
+    """
+    GET method\n
+    Returns paginated list of all items for whole session.\n
+    parameter 'package_type' for filtering by name of package type\n
+    if not provided, default 'page'=1 and 'page_size'=10\n
+    """
+    if page < 1:
+        raise HTTPException(status_code=422, detail="page can't be less than 1")
+    session_id = get_session_cookie(request)
+    packages = await PackageModel.get_all(
+        page, page_size, package_type=package_type, session_id=session_id
+    )
+    packages_total = await PackageModel.get_total_count(
+        package_type=package_type,
+        session_id=session_id
+    )
+    total_pages = ceil(packages_total/page_size)
+    return PaginationResponse(
+        current_page=page,
+        page_size=page_size,
+        total_pages=total_pages,
+        total_items=packages_total,
+        results=[PackageOutSchema.from_orm(_) for _ in packages]
+    )
+
+
+@router.get("/{package_id}")
+async def get_package(
+    request: Request,
+    package_id: UUID
+) -> PackageOutSchema:
+    """
+    GET method\n
+    Returns a single instance of packages by provided package_id\n
+    """
+    session_id = get_session_cookie(request)
+    package = await PackageModel.get_by_id(package_id, session_id)
+    if not package:
+        raise HTTPException(status_code=404, detail="package by given id was not found or does not belong to this session")
+    return PackageOutSchema.from_orm(package)
+
+
+@router.post("/", status_code=201)
+async def post_packages(
+    request: Request,
+    data: PackageInSchema,
+) -> PackageOutSchema:
+    """
+    POST method\n
+    Registration of package. Returns package information with id\n
+    """
+    session_id = get_session_cookie(request)
+    package_type = await PackageTypeModel.get_by_id(data.type_id)
+    if not package_type:
+        raise HTTPException(status_code=422, detail="package type by given type_id was not found")
+    package = PackageModel(
+        name=data.name,
+        weight=data.weight,
+        type_id=data.type_id,
+        content_cost=data.content_cost,
+        session_id=session_id,
+    )
+    async with db_session() as session:
+        session.add(package)
+        await session.commit()
+    return PackageOutSchema.from_orm(package)
+
+
+@router.get("/types")
+async def get_packages(request: Request) -> List[PackageType]:
+    """
+    GET method\n
+    List of all available package types \n
+    """
+    types = await PackageTypeModel.get_all()
+    return types
+
