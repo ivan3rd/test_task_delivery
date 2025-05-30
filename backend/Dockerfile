@@ -30,5 +30,5 @@ CMD ["sh", "-c", "\
   echo 'Loading pre production data...' && \
   /bin/bash ./load_database.sh && \
   echo 'Starting FastAPI...' && \
-  watchfiles 'uvicorn app.main:app --host 0.0.0.0 --port 8000' \
+  watchfiles 'uvicorn app.main:app --host 0.0.0.0 --port 8000'  \
 "]

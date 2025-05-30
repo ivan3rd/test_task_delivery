@@ -1,16 +1,27 @@
 from uuid import UUID
-from typing import Annotated, List
 from math import ceil
-from fastapi import APIRouter, HTTPException, Request, Response
+import logging
+from fastapi import APIRouter, HTTPException, Request
 from app.db import db_session
 from app.utils import get_session_cookie
 from app.schemas import (
-    PackageInSchema, PackageOutSchema, PackageType, PaginationResponse
+    PackageInSchema, PackageOutSchema, PackageTypeSchema, PaginationResponse
 )
 from app.models import PackageModel, PackageTypeModel
 
 
+logger = logging.getLogger('uvicorn.error')
+
 router = APIRouter()
+
+@router.get("/types")
+async def get_package_types(request: Request) -> list[PackageTypeSchema]:
+    """
+    GET method\n
+    List of all available package types \n
+    """
+    types = await PackageTypeModel.get_all()
+    return [PackageTypeSchema.from_orm(_) for _ in types]
 
 
 @router.get("/")
@@ -63,7 +74,7 @@ async def get_package(
 
 
 @router.post("/", status_code=201)
-async def post_packages(
+async def post_package(
     request: Request,
     data: PackageInSchema,
 ) -> PackageOutSchema:
@@ -86,14 +97,4 @@ async def post_packages(
         session.add(package)
         await session.commit()
     return PackageOutSchema.from_orm(package)
-
-
-@router.get("/types")
-async def get_packages(request: Request) -> List[PackageType]:
-    """
-    GET method\n
-    List of all available package types \n
-    """
-    types = await PackageTypeModel.get_all()
-    return types
 

@@ -1,4 +1,4 @@
-from uuid import uuid4
+from uuid import uuid4, UUID
 from fastapi import Request, Response
 
 
@@ -14,7 +14,7 @@ def set_session_cookie(response: Response):
     )
 
 
-def get_session_cookie(request: Request):
+def get_session_cookie(request: Request) -> UUID | str | None:
     session_data = request.cookies.get('session_id')
     return session_data if session_data else None
 

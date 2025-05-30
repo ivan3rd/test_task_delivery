@@ -1,8 +1,8 @@
 from uuid import UUID
 
-from pydantic import BaseModel
+from .utils import SchemaBase
 
 
-class PackageType(BaseModel):
-    id: UUID
+class PackageTypeSchema(SchemaBase):
+    id: UUID | str
     name: str

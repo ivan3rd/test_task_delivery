@@ -1,4 +1,3 @@
-from typing import List
 from pydantic import BaseModel
 
 
@@ -12,4 +11,4 @@ class PaginationResponse(BaseModel):
     page_size: int
     total_pages: int
     total_items: int
-    results: List
+    results: list

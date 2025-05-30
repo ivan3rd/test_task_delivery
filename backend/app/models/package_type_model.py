@@ -1,8 +1,6 @@
 from uuid import UUID
-from datetime import datetime
 
 import sqlalchemy as sa
-from fastapi import File
 
 from app.db import Base, db_session
 
@@ -10,7 +8,7 @@ from app.db import Base, db_session
 class PackageTypeModel(Base):
     __tablename__ = 'package_type'
 
-    id = sa.Column(sa.String(36), primary_key=True, index=True, server_default=sa.text('UUID()'))
+    id = sa.Column(sa.String(36), primary_key=True, index=True, server_default=sa.text('UUID()'), default=sa.text('UUID()'))
     name = sa.Column(sa.String(255))
 
     @classmethod

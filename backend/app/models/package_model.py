@@ -39,9 +39,10 @@ class PackageModel(Base):
 
     @classmethod
     async def get_all(
-        cls, page: int | None,
-        page_size: int | None,
+        cls, page: int | None = None,
+        page_size: int | None = None,
         package_type: str | None = None,
+        has_delivery_cost: bool | None = None,
         session_id: UUID | None = None
     ):
         query = sa.select(PackageModel)
@@ -52,6 +53,11 @@ class PackageModel(Base):
                 PackageTypeModel, PackageModel.type_id == PackageTypeModel.id
             ).where(PackageTypeModel.name == package_type)
             print('package_type: ', package_type)
+        if has_delivery_cost is not None:
+            if has_delivery_cost == False:
+                query = query.where(PackageModel.delivery_cost.is_(None))
+            if has_delivery_cost == True:
+                query = query.where(PackageModel.delivery_cost.is_not(None))
         if page and page_size:
             offset = (page - 1) * page_size
             query = query.offset(offset).limit(page_size)
