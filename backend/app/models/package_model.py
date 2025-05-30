@@ -71,3 +71,7 @@ class PackageModel(Base):
             query = query.where(PackageModel.session_id == str(session_id))
         async with db_session() as session:
             return (await session.scalars(query)).one_or_none()
+
+    def count_delivery_cost(self, der: float = 100):
+        self.delivery_cost = (self.weight * 0.5 + self.content_cost * 0.01) * der
+
