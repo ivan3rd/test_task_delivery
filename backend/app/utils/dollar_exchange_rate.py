@@ -12,6 +12,7 @@ async def get_dollar_exchange_rate() -> float | None:
     cache = RedisCache()
     der = None
     try:
+        logger.info('get_dollar_exchage_rate(). Requesting exchange rate from redis cache')
         der: bytes | None = await cache.get('der_value')
         if der is None:
             logger.info('get_dollar_exchage_rate(). Cache appeared to be empty. Getting new value for dollar exchange rate')
@@ -24,6 +25,7 @@ async def get_dollar_exchange_rate() -> float | None:
             else:
                 logger.error('get_dollar_exchage_rate(). Got unexpected answer from foreing service.')
                 logger.error(f'get_dollar_exchage_rate(). Status_code: {response.status_code}. json: {response.json()}')
+        logger.info('get_dollar_exchage_rate(). Got exchange rate.')
     except Exception as e:
         logger.error(f'get_dollar_exchage_rate(). Error occurred while executing. Exception: {e}')
     await cache.connection_close()

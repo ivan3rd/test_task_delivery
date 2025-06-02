@@ -64,8 +64,7 @@ services:
       - delivery-network
     volumes:
       - ./redis_data:/var/lib/redis
-      - ./redis.conf:/usr/local/etc/redis/redis.conf
-      - ./users.acl:/usr/local/etc/redis/users.acl
+      - ./redis:/usr/local/etc/redis
     ports:
       - "6379:6379"
     command: >

@@ -10,7 +10,6 @@ class RedisCache():
 
     def __init__(self):
         logger.info(f'RedisCache.__init__(). Redis URL = {CACHE_URL}')
-        print(CACHE_URL)
         self.redis = aioredis.Redis.from_url(CACHE_URL)
 
     async def connection_close(self):
