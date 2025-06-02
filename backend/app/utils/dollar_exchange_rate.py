@@ -7,7 +7,7 @@ from app.cache import RedisCache
 logger = logging.getLogger('uvicorn.error')
 
 
-async def get_dollar_exchage_rate() -> float | None:
+async def get_dollar_exchange_rate() -> float | None:
     logger.info('get_dollar_exchage_rate(). Started')
     cache = RedisCache()
     der = None

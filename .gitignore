@@ -1,4 +1,5 @@
 mysql_data*
+redis_data*
 .venv*
 *__pycache__*
 

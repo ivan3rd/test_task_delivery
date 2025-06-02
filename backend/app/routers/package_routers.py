@@ -5,7 +5,7 @@ import sqlalchemy as sa
 
 from fastapi import APIRouter, HTTPException, Request
 from app.db import db_session
-from app.utils import get_session_cookie, get_dollar_exchage_rate
+from app.utils import SessionCookieManager, get_dollar_exchange_rate
 from app.schemas import (
     PackageInSchema, PackageOutSchema, PackageTypeSchema, PaginationResponse
 )
@@ -41,7 +41,7 @@ async def get_packages(
     """
     if page < 1:
         raise HTTPException(status_code=422, detail="page can't be less than 1")
-    session_id = get_session_cookie(request)
+    session_id = SessionCookieManager.get_session_cookie(request)
     packages = await PackageModel.get_all(
         page, page_size, package_type=package_type, session_id=session_id
     )
@@ -68,7 +68,7 @@ async def get_package(
     GET method\n
     Returns a single instance of packages by provided package_id\n
     """
-    session_id = get_session_cookie(request)
+    session_id = SessionCookieManager.get_session_cookie(request)
     package = await PackageModel.get_by_id(package_id, session_id)
     if not package:
         raise HTTPException(status_code=404, detail="package by given id was not found or does not belong to this session")
@@ -84,7 +84,7 @@ async def post_package(
     POST method\n
     Registration of package. Returns package information with id\n
     """
-    session_id = get_session_cookie(request)
+    session_id = SessionCookieManager.get_session_cookie(request)
     package_type = await PackageTypeModel.get_by_id(data.type_id)
     if not package_type:
         raise HTTPException(status_code=422, detail="package type by given type_id was not found")
@@ -104,11 +104,11 @@ async def post_package(
 @router.put('/set-delivery-cost')
 async def set_delivery_cost(request: Request):
     logger.info('set_delivery_cost(). Starting recounting delivery cost of a packages')
-    der = await get_dollar_exchage_rate()
+    der = await get_dollar_exchange_rate()
     if der is None:
         raise HTTPException(status_code=422, detail="Couldn't get der data from service. Can't proceed to recalculate delivery cost")
     async with db_session() as session:
-        # Because possible package data could be extremly large,
+        # Because data on packages could be extremly large,
         # async streaming will be used in order to not overload ram of container
         query = sa.select(PackageModel).where(
             PackageModel.delivery_cost.is_(None)

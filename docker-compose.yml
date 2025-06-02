@@ -20,6 +20,7 @@ services:
       - ./backend/:/backend
     environment:
       - DATABASE_URL=mysql+aiomysql://admin:password@db:3306/delivery
+      - CACHE_URL=redis://admin:password@redis
       - MYSQL_ROOT_PASSWORD=root_password
       - MYSQL_DATABASE=delivery
       - MYSQL_USER=admin
@@ -28,6 +29,7 @@ services:
       - delivery-network
     depends_on:
       - db
+      - cache
 
   db:
     restart: always
@@ -50,5 +52,49 @@ services:
     networks:
       - delivery-network
 
+  cache:
+    restart: unless-stopped
+    image: redis:latest
+    container_name: redis
+    environment:
+      - REDIS_PASSWORD=password
+      - REDIS_USER=admin
+      - REDIS_USER_PASSWORD=password
+    networks:
+      - delivery-network
+    volumes:
+      - ./redis_data:/var/lib/redis
+      - ./redis.conf:/usr/local/etc/redis/redis.conf
+      - ./users.acl:/usr/local/etc/redis/users.acl
+    ports:
+      - "6379:6379"
+    command: >
+      sh -c '
+        redis-server /usr/local/etc/redis/redis.conf --aclfile /usr/local/etc/redis/users.acl
+      '
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "$$REDIS_PASSWORD", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    tty: true
+    stdin_open: true
+
+  cron:
+    image: alpine:latest
+    volumes:
+      - ./recount_task.sh:/recount_task.sh
+    command: >
+      sh -c '
+        chmod +x /recount_task.sh &&
+        apk add --no-cache curl &&
+        /recount_task.sh
+      '
+    networks:
+      - delivery-network
+    depends_on:
+      - backend
+
 volumes:
   mysql_data:
+  redis_data:
