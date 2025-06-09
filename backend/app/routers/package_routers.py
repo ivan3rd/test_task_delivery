@@ -23,7 +23,7 @@ async def get_package_types(request: Request) -> list[PackageTypeSchema]:
     List of all available package types \n
     """
     types = await PackageTypeModel.get_all()
-    return [PackageTypeSchema.from_orm(_) for _ in types]
+    return [PackageTypeSchema.model_validate(_) for _ in types]
 
 
 @router.get("/")
@@ -55,7 +55,7 @@ async def get_packages(
         page_size=page_size,
         total_pages=total_pages,
         total_items=packages_total,
-        results=[PackageOutSchema.from_orm(_) for _ in packages]
+        results=[PackageOutSchema.model_validate(_) for _ in packages]
     )
 
 
@@ -72,7 +72,7 @@ async def get_package(
     package = await PackageModel.get_by_id(package_id, session_id)
     if not package:
         raise HTTPException(status_code=404, detail="package by given id was not found or does not belong to this session")
-    return PackageOutSchema.from_orm(package)
+    return PackageOutSchema.model_validate(package)
 
 
 @router.post("/", status_code=201)
@@ -98,7 +98,7 @@ async def post_package(
     async with db_session() as session:
         session.add(package)
         await session.commit()
-    return PackageOutSchema.from_orm(package)
+    return PackageOutSchema.model_validate(package)
 
 
 @router.put('/set-delivery-cost')

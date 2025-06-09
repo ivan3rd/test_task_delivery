@@ -3,7 +3,7 @@ from datetime import datetime
 
 import sqlalchemy as sa
 
-from app.db import Base, db_session
+from app.db import Base, db_session, session_manager
 from .package_type_model import PackageTypeModel
 
 
@@ -34,8 +34,9 @@ class PackageModel(Base):
             query = query.outerjoin(
                 PackageTypeModel, PackageModel.type_id == PackageTypeModel.id
             ).where(PackageTypeModel.name == package_type)
-        async with db_session() as session:
-            return (await session.scalar(query))
+        return (await session_manager.session.scalar(query))
+        # async with db_session() as session:
+            # return (await session.scalar(query))
 
     @classmethod
     async def get_all(
@@ -61,16 +62,18 @@ class PackageModel(Base):
         if page and page_size:
             offset = (page - 1) * page_size
             query = query.offset(offset).limit(page_size)
-        async with db_session() as session:
-            return (await session.scalars(query)).all()
+        return (await session_manager.session.scalars(query))
+        # async with db_session() as session:
+            # return (await session.scalars(query)).all()
 
     @classmethod
     async def get_by_id(cls, _id: UUID | str, session_id: UUID | None = None):
         query = sa.select(PackageModel).where(PackageModel.id == str(_id))
         if session_id:
             query = query.where(PackageModel.session_id == str(session_id))
-        async with db_session() as session:
-            return (await session.scalars(query)).one_or_none()
+        return (await session_manager.session.scalars(query))
+        # async with db_session() as session:
+            # return (await session.scalars(query)).one_or_none()
 
     def count_delivery_cost(self, der: float = 100):
         self.delivery_cost = (self.weight * 0.5 + self.content_cost * 0.01) * der

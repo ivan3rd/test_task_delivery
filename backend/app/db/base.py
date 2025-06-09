@@ -4,4 +4,3 @@ from sqlalchemy.orm import DeclarativeBase
 
 class Base(AsyncAttrs, DeclarativeBase):
     """Base class for all models with async support"""
-    pass

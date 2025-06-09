@@ -3,7 +3,10 @@
 # setting global variable for writing inside a database from file
 mysql -h db -u root -p${MYSQL_ROOT_PASSWORD} <<EOF
 SET GLOBAL local_infile=1;
+GRANT ALL PRIVILEGES ON *.* TO 'admin'@'%' WITH GRANT OPTION;
+FLUSH PRIVILEGES;
 EOF
+#GRANT ALL TO '${MYSQL_USER}'@'%';
 
 mysql -h db -u ${MYSQL_USER} -p${MYSQL_PASSWORD} -D delivery <<EOF
 -- Create temporary staging table

@@ -2,7 +2,7 @@ from uuid import UUID
 
 import sqlalchemy as sa
 
-from app.db import Base, db_session
+from app.db import Base, db_session, session_manager
 
 
 class PackageTypeModel(Base):
@@ -13,30 +13,37 @@ class PackageTypeModel(Base):
 
     @classmethod
     async def get_all(cls):
-        async with db_session() as session:
-            return (await session.scalars(
-                sa.select(PackageTypeModel)
-            )).all()
+        return (await session_manager.session.scalars(
+            sa.select(PackageTypeModel)
+        )).all()
+        # async with db_session() as session:
+            # return (await session.scalars(
+                # sa.select(PackageTypeModel)
+            # )).all()
 
     @classmethod
     async def get_by_id(cls, _id: UUID | str):
-        async with db_session() as session:
-            return (await session.scalars(
-                sa.select(PackageTypeModel)
-                .where(PackageTypeModel.id == str(_id))
-            )).one_or_none()
-
-    @classmethod
-    async def get_by_name(cls, name: str):
-        result = (await db_session().scalars(
+        return (await session_manager.session.scalars(
             sa.select(PackageTypeModel)
-            .where(PackageTypeModel.name == name)
+            .where(PackageTypeModel.id == str(_id))
         )).one_or_none()
-        if not result:
-            result = (await db_session().scalars(
-                sa.select(PackageTypeModel)
-                .where(PackageTypeModel.name == 'misc')
-            )).one_or_none()
-        return result
+        # async with db_session() as session:
+            # return (await session.scalars(
+                # sa.select(PackageTypeModel)
+                # .where(PackageTypeModel.id == str(_id))
+            # )).one_or_none()
+
+    # @classmethod
+    # async def get_by_name(cls, name: str):
+        # result = (await db_session().scalars(
+            # sa.select(PackageTypeModel)
+            # .where(PackageTypeModel.name == name)
+        # )).one_or_none()
+        # if not result:
+            # result = (await db_session().scalars(
+                # sa.select(PackageTypeModel)
+                # .where(PackageTypeModel.name == 'misc')
+            # )).one_or_none()
+        # return result
 
 

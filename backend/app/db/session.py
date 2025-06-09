@@ -1,3 +1,4 @@
+from contextvars import ContextVar
 from sqlalchemy.ext.asyncio import (
     create_async_engine,
     async_sessionmaker,
@@ -5,23 +6,38 @@ from sqlalchemy.ext.asyncio import (
 )
 from .base import Base
 
+db_session_context = ContextVar('db_session')
 
 class DatabaseSessionManager:
     def __init__(self):
         self._engine = None
         self._sessionmaker = None
+        self.db_session_context = ContextVar('db_session')
 
-    def init(self, url: str):
+    async def init(self, url: str):
         self._engine = create_async_engine(
             url,
             pool_pre_ping=True,
-            echo=True
+            echo=True,
+            # isolation_level='READ COMMITTED', # разные треды могут считывать то, что написано друг у друга, если данные закомичены
+            # isolation_level='REPEATABLE READ', # держит данные в разных тредах, но пытается постоянно читать, судя по названию
+            # isolation_level='SERIALIZABLE', # наивысшая степень изоляции
         )
         self._sessionmaker = async_sessionmaker(
             bind=self._engine,
             expire_on_commit=False,
             class_=AsyncSession
         )
+
+    async def connect(self):
+        if self._sessionmaker is None:
+            raise Exception("DatabaseSessionManager is not initialized")
+        async with self._sessionmaker() as session:
+            self.db_session_context.set(session)
+
+    @property
+    def session(self) -> AsyncSession:
+        return self.db_session_context.get('db_session')
 
     async def close(self):
         if self._engine is None:

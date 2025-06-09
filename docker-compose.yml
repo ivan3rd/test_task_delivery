@@ -19,7 +19,8 @@ services:
     volumes:
       - ./backend/:/backend
     environment:
-      - DATABASE_URL=mysql+aiomysql://admin:password@db:3306/delivery
+      #- DATABASE_URL=mysql+aiomysql://admin:password@db:3306/delivery
+      - DATABASE_URL=mysql+aiomysql://admin:password@db:3306
       - CACHE_URL=redis://admin:password@redis
       - MYSQL_ROOT_PASSWORD=root_password
       - MYSQL_DATABASE=delivery

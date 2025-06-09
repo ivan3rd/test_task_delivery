@@ -8,9 +8,9 @@ async def db_session():
     session = await session_manager.get_session()
     try:
         yield session
-    except Exception:
+    except Exception as e:
         await session.rollback()
-        raise
+        raise e
     finally:
         await session.close()
 
