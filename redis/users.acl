@@ -1,2 +1,2 @@
 user default on nopass ~* +@all
-user admin on >password ~* +@all
+user admin on allkeys allchannels allcommands >password ~*

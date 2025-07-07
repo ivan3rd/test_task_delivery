@@ -6,6 +6,7 @@ services:
 
   backend:
     restart: always
+    #container_name: backend_cont
     build:
       context: ./backend
       dockerfile: ./Dockerfile
@@ -21,7 +22,7 @@ services:
     environment:
       #- DATABASE_URL=mysql+aiomysql://admin:password@db:3306/delivery
       - DATABASE_URL=mysql+aiomysql://admin:password@db:3306
-      - CACHE_URL=redis://admin:password@redis
+      - CACHE_URL=redis://admin:password@redis:6379
       - MYSQL_ROOT_PASSWORD=root_password
       - MYSQL_DATABASE=delivery
       - MYSQL_USER=admin
@@ -37,6 +38,7 @@ services:
     image: mysql:latest
     ports:
       - "3306:3306"
+    #container_name: mysql_cont
     container_name: mysql
     environment:
       - MYSQL_ROOT_PASSWORD=root_password
@@ -53,9 +55,49 @@ services:
     networks:
       - delivery-network
 
+  celery:
+    container_name: celery_cont
+    build:
+      context: ./backend
+    #working_dir: /backend/celery_tasks
+    #command: celery -A app worker --pool threads --concurrency 2 --loglevel=info
+    working_dir: /backend
+    command: celery -A celery_tasks.app worker --pool threads --concurrency 2 --loglevel=info
+    environment:
+      - DATABASE_URL=mysql+aiomysql://admin:password@db:3306
+      - CACHE_URL=redis://admin:password@redis:6379
+    volumes:
+      - ./backend/app/:/backend/app
+      - ./backend/celery_tasks/:/backend/celery_tasks
+    depends_on:
+      - cache
+      - backend
+      - db
+    networks:
+      - delivery-network
+
+  #beat:
+    #container_name: celery_beat_cont
+    #build:
+      #context: ./backend
+    #command: celery -A /backend/celery beat -l INFO --scheduler
+    #environment:
+      #- DATABASE_URL=mysql+aiomysql://admin:password@db:3306
+      #- CACHE_URL=redis://admin:password@redis
+    #volumes:
+      #- .backend:/backend/app
+      #- .backend:/backend/celery
+      #- .backend:/backend/alembic
+    #depends_on:
+      #- cache
+      #- backend
+      #- db
+
   cache:
     restart: unless-stopped
+    #image: redis:7.0
     image: redis:latest
+    #container_name: redis_cont
     container_name: redis
     environment:
       - REDIS_PASSWORD=password
@@ -80,20 +122,20 @@ services:
     tty: true
     stdin_open: true
 
-  cron:
-    image: alpine:latest
-    volumes:
-      - ./recount_task.sh:/recount_task.sh
-    command: >
-      sh -c '
-        chmod +x /recount_task.sh &&
-        apk add --no-cache curl &&
-        /recount_task.sh
-      '
-    networks:
-      - delivery-network
-    depends_on:
-      - backend
+  #cron:
+    #image: alpine:latest
+    #volumes:
+      #- ./recount_task.sh:/recount_task.sh
+    #command: >
+      #sh -c '
+        #chmod +x /recount_task.sh &&
+        #apk add --no-cache curl &&
+        #/recount_task.sh
+      #'
+    #networks:
+      #- delivery-network
+    #depends_on:
+      #- backend
 
 volumes:
   mysql_data:

@@ -1,16 +1,16 @@
 import os
 import logging
 import redis.asyncio as aioredis
+from app.settings import CACHE_URL, CACHE_DB
 
 
-CACHE_URL = os.getenv('CACHE_URL', '')
 logger = logging.getLogger('uvicorn.error')
 
 class RedisCache():
 
     def __init__(self):
-        logger.info(f'RedisCache.__init__(). Redis URL = {CACHE_URL}')
-        self.redis = aioredis.Redis.from_url(CACHE_URL)
+        logger.info(f'RedisCache.__init__(). Redis URL = {CACHE_URL}/{CACHE_DB}')
+        self.redis = aioredis.Redis.from_url(f'{CACHE_URL}/{CACHE_DB}')
 
     async def connection_close(self):
         await self.redis.aclose()

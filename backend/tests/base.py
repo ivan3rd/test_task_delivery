@@ -1,29 +1,19 @@
 import os
-import io
-import sqlalchemy as sa
 from httpx import AsyncClient, ASGITransport
-# import trio
 from typing import override
-from uuid import UUID, uuid4
 import unittest as ut
-from unittest.mock import patch, MagicMock
-import asyncio
 
-from fastapi.testclient import TestClient
-from sqlalchemy.ext.asyncio import create_async_engine
 
-from app.db import session_manager, db_session, db_transaction, Base
+from app.db import session_manager
 from app.models import PackageTypeModel
-from app.main import app as main_app, lifespan # Import your FastAPI app
-
-
-DATABASE_URL = os.getenv('DATABASE_URL')
-TEST_DATABASE_URL = DATABASE_URL+'/test_delivery?local_infile=1'
+from app.main import app as main_app # Import your FastAPI app
+from app.settings import TEST_DATABASE_URL
 
 
 class BaseTestCase(ut.IsolatedAsyncioTestCase):
 
     client: AsyncClient = None
+    client1: AsyncClient = None
 
 
     async def init_db(self):
@@ -42,11 +32,13 @@ class BaseTestCase(ut.IsolatedAsyncioTestCase):
         # client
         self.client = AsyncClient(transport=ASGITransport(app=main_app), base_url='http://test')
 
+        self.client1 = AsyncClient(transport=ASGITransport(app=main_app), base_url='http://test')
+
         # db
         await self.init_db()
-        type_packages = [{'name': 'electronics'}, {'name': 'clothes'}, {'name': 'misc'}]
+        self.type_packages = [{'name': 'electronics'}, {'name': 'clothes'}, {'name': 'misc'}]
         self.session = session_manager.session
-        for t in type_packages:
+        for t in self.type_packages:
             self.session.add(PackageTypeModel(name=t['name']))
         await self.session.commit()
 

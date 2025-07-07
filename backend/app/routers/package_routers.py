@@ -10,6 +10,8 @@ from app.schemas import (
     PackageInSchema, PackageOutSchema, PackageTypeSchema, PaginationResponse
 )
 from app.models import PackageModel, PackageTypeModel
+from celery_tasks import set_delivery_cost_task
+# from celery_tasks import test_task
 
 
 logger = logging.getLogger('uvicorn.error')
@@ -103,22 +105,30 @@ async def post_package(
 
 @router.put('/set-delivery-cost')
 async def set_delivery_cost(request: Request):
-    logger.info('set_delivery_cost(). Starting recounting delivery cost of a packages')
-    der = await get_dollar_exchange_rate()
-    if der is None:
-        raise HTTPException(status_code=422, detail="Couldn't get der data from service. Can't proceed to recalculate delivery cost")
-    async with db_session() as session:
-        # Because data on packages could be extremly large,
-        # async streaming will be used in order to not overload ram of container
-        query = sa.select(PackageModel).where(
-            PackageModel.delivery_cost.is_(None)
-        )
-        data = await session.stream_scalars(query)
+    """
+    PUT method\n
+    API for mannualy recounting delivery_cost of packages.
+    This task will run periodecally, but there might be some cases, that require
+    tasks recounting of delivery_cost as soon as possible
+    """
+    set_delivery_cost_task.delay()
 
-        packages_cost_recounted = 0
-        async for package in data:
-            package.count_delivery_cost(der)
-            packages_cost_recounted += 1
-        logger.info(f'set_delivery_cost(). Delivery cost was recounted for {packages_cost_recounted} packages.')
-        await session.commit()
+    # logger.info('set_delivery_cost(). Starting recounting delivery cost of a packages')
+    # der = await get_dollar_exchange_rate()
+    # if der is None:
+        # raise HTTPException(status_code=422, detail="Couldn't get der data from service. Can't proceed to recalculate delivery cost")
+    # async with db_session() as session:
+        # # Because data on packages could be extremly large,
+        # # async streaming will be used in order to not overload ram of container
+        # query = sa.select(PackageModel).where(
+            # PackageModel.delivery_cost.is_(None)
+        # )
+        # data = await session.stream_scalars(query)
+
+        # packages_cost_recounted = 0
+        # async for package in data:
+            # package.count_delivery_cost(der)
+            # packages_cost_recounted += 1
+        # logger.info(f'set_delivery_cost(). Delivery cost was recounted for {packages_cost_recounted} packages.')
+        # await session.commit()
     return True

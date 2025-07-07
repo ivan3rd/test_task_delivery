@@ -1,12 +1,12 @@
-import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 
 from app.routers import main_router
-from app.db import session_manager, db_session_manager
+from app.db import session_manager
 from app.utils import SessionCookieManager
 
-DATABASE_URL = os.getenv('DATABASE_URL')
+from app.settings import DATABASE_URL
+# DATABASE_URL = os.getenv('DATABASE_URL')
 
 
 @asynccontextmanager

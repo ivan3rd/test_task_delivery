@@ -71,9 +71,7 @@ class PackageModel(Base):
         query = sa.select(PackageModel).where(PackageModel.id == str(_id))
         if session_id:
             query = query.where(PackageModel.session_id == str(session_id))
-        return (await session_manager.session.scalars(query))
-        # async with db_session() as session:
-            # return (await session.scalars(query)).one_or_none()
+        return (await session_manager.session.scalars(query)).one_or_none()
 
     def count_delivery_cost(self, der: float = 100):
         self.delivery_cost = (self.weight * 0.5 + self.content_cost * 0.01) * der
